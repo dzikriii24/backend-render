@@ -26,6 +26,9 @@ import paket_1 from "./routes/paket1";
 import paket_2 from "./routes/paket2";
 import paket_3 from "./routes/paket3";
 import profileRoutes from "./routes/profileRoutes"
+import SertifikatRouter from "./routes/sertifikatRoutes"
+import sertifPageManagements from "./routes/sertifPageManagementRoutes";
+import detailSertifManagements from "./routes/detailSertifRoutes";
 
 dotenv.config();
 
@@ -101,8 +104,13 @@ app.use(
   paket_1,
   paket_2,
   paket_3,
-  profileRoutes
-);
+  profileRoutes,
+)
+
+app.use("/api/sertifikat", SertifikatRouter)
+
+app.use('/api/page-management', sertifPageManagements);
+app.use('/api/detail-sertif-management', detailSertifManagements);
 
 // Final error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
