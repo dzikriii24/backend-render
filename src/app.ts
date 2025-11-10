@@ -30,6 +30,8 @@ import ctfRankingRoutes from "./routes/ctfRankingRoutes";
 import pageConfigRoutes from "./routes/pageConfigRoutes";
 import sertifikatRoutes from "./routes/sertifikatRoutes";
 import ctfPlaygroundRoutes from "./routes/ctfPlaygroundRoutes";
+import sertifPageManagements from "./routes/sertifPageManagementRoutes";
+import CTFPageManagements from "./routes/ctfPageRoutes";
 
 dotenv.config();
 
@@ -64,39 +66,42 @@ app.use((req, res, next) => {
   next();
 });
 
-// ⚠️ FIX: Body parsing middleware HARUS diletakkan SEBELUM routes
-app.use(express.json());
-app.use(bodyParser.json());
+// ⚠️ FIX: Hapus duplikasi body parser, gunakan salah satu saja
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ⚠️ FIX: Juga tambahkan bodyParser untuk URL-encoded data
-app.use(express.json());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// ⚠️ FIX: Atau gunakan bodyParser (pilih salah satu, jangan keduanya)
+// app.use(bodyParser.json({ limit: '10mb' }));
+// app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// Routes - HARUS SETELAH body parser
+// ⚠️ FIX: Debug middleware untuk log semua request
+app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log('Query params:', req.query);
+  console.log('Body:', req.body);
+  next();
+});
+
+// ⚠️ FIX: Routes - Pastikan path base sudah benar
 app.use("/api/rankings", ctfRankingRoutes);
 app.use("/api/page-config", pageConfigRoutes);
 app.use("/api/sertifikat", sertifikatRoutes);
 app.use("/api/ctf", ctfPlaygroundRoutes);
+app.use("/api/page-management", sertifPageManagements);
+app.use("/api/ctf-page-management", CTFPageManagements); // ⚠️ Ini yang kita test
 
-// Global error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error("Error details:", err);
-  res.status(500).json({
-    error: "Internal Server Error",
-    message: err.message || "Something went wrong",
+// ⚠️ FIX: Tambahkan route test khusus untuk debugging
+app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
+  console.log("Test route accessed");
+  res.json({ 
+    message: "CTF Page Management API is working!",
+    timestamp: new Date().toISOString()
   });
 });
 
-// Basic route
-app.get("/about-us", (req, res) => {
-  res.json([{ id: 1, contentType: "text", content: "About Us content" }]);
-});
-
-// Logs route - Explicitly set the path
+// Other API routes
 app.use("/api", logsRoutes);
 app.use("/api", profileRoutes);
-// Other API routes
 app.use(
   "/api",
   adminRoutes,
@@ -119,15 +124,37 @@ app.use(
   keunggulanRoute,
   paket_1,
   paket_2,
-  paket_3,
-  profileRoutes
+  paket_3
 );
 
-// Final error handler
+// Basic route
+app.get("/about-us", (req, res) => {
+  res.json([{ id: 1, contentType: "text", content: "About Us content" }]);
+});
+
+// Global error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error("Error received:", err);
-  console.error("Request details:", req.body);
-  res.status(500).send("Something went wrong!");
+  console.error("Error details:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: err.message || "Something went wrong",
+  });
+});
+
+// 404 Handler untuk route yang tidak ditemukan
+app.use("*", (req: Request, res: Response) => {
+  console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    error: "Route not found",
+    method: req.method,
+    url: req.originalUrl,
+    availableRoutes: [
+      "GET /api/ctf-page-management",
+      "GET /api/ctf-page-management/test",
+      "PUT /api/ctf-page-management/:id",
+      "GET /api/ctf-page-management/section/:section"
+    ]
+  });
 });
 
 // Health check endpoint
@@ -144,6 +171,8 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`CTF Page Management Test: http://localhost:${PORT}/api/ctf-page-management/test`);
+  console.log(`CTF Page Management Main: http://localhost:${PORT}/api/ctf-page-management`);
 });
 
 export default app;
