@@ -25,10 +25,11 @@ import keunggulanRoute from "./routes/keunggulanRoute";
 import paket_1 from "./routes/paket1";
 import paket_2 from "./routes/paket2";
 import paket_3 from "./routes/paket3";
-import profileRoutes from "./routes/profileRoutes"
-import SertifikatRouter from "./routes/sertifikatRoutes"
-import sertifPageManagements from "./routes/sertifPageManagementRoutes";
-import detailSertifManagements from "./routes/detailSertifRoutes";
+import profileRoutes from "./routes/profileRoutes";
+import ctfRankingRoutes from "./routes/ctfRankingRoutes";
+import pageConfigRoutes from "./routes/pageConfigRoutes";
+import sertifikatRoutes from "./routes/sertifikatRoutes";
+import ctfPlaygroundRoutes from "./routes/ctfPlaygroundRoutes";
 
 dotenv.config();
 
@@ -38,7 +39,12 @@ app.set("trust proxy", true);
 // Configure CORS first
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://www.google.com", "http://192.168.100.36:3000", "https://ccc9-114-10-45-131.ngrok-free.app"],
+    origin: [
+      "http://localhost:3000",
+      "https://www.google.com",
+      "http://192.168.100.36:3000",
+      "https://ccc9-114-10-45-131.ngrok-free.app",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -58,9 +64,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Body parsing middleware
+// ⚠️ FIX: Body parsing middleware HARUS diletakkan SEBELUM routes
 app.use(express.json());
 app.use(bodyParser.json());
+
+// ⚠️ FIX: Juga tambahkan bodyParser untuk URL-encoded data
+app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Routes - HARUS SETELAH body parser
+app.use("/api/rankings", ctfRankingRoutes);
+app.use("/api/page-config", pageConfigRoutes);
+app.use("/api/sertifikat", sertifikatRoutes);
+app.use("/api/ctf", ctfPlaygroundRoutes);
 
 // Global error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -77,9 +94,8 @@ app.get("/about-us", (req, res) => {
 });
 
 // Logs route - Explicitly set the path
-app.use('/api', logsRoutes);
-app.use('/api', profileRoutes);
-
+app.use("/api", logsRoutes);
+app.use("/api", profileRoutes);
 // Other API routes
 app.use(
   "/api",
@@ -104,19 +120,30 @@ app.use(
   paket_1,
   paket_2,
   paket_3,
-  profileRoutes,
-)
-
-app.use("/api/sertifikat", SertifikatRouter)
-
-app.use('/api/page-management', sertifPageManagements);
-app.use('/api/detail-sertif-management', detailSertifManagements);
+  profileRoutes
+);
 
 // Final error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("Error received:", err);
   console.error("Request details:", req.body);
   res.status(500).send("Something went wrong!");
+});
+
+// Health check endpoint
+app.get("/api/health", (req: Request, res: Response) => {
+  res.json({
+    status: "OK",
+    message: "CTF Ranking API is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
 });
 
 export default app;
