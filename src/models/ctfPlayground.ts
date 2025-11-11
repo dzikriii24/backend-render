@@ -4,6 +4,7 @@ export interface CTFCategory {
   slug: string;
   description: string;
   is_active: boolean;
+  link:string;
   created_at?: Date;
 }
 

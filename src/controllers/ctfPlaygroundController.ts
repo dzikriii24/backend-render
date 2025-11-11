@@ -27,7 +27,7 @@ export const getAllChallenges = async (
 ): Promise<void> => {
   try {
     const result = await pool.query(`
-            SELECT chal.*, cat.name as category_name, cat.slug as category_slug
+            SELECT chal.*, cat.name as category_name, cat.slug as category_slug, cat.link as category_link
             FROM ctf_challenges chal
             LEFT JOIN ctf_categories cat ON chal.category_id = cat.id
             ORDER BY cat.id, chal.sort_order
@@ -93,17 +93,17 @@ export const createCategory = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, slug, description, is_active = true }: CTFCategory = req.body;
+    const { name, slug, link, description, is_active = true }: CTFCategory = req.body;
 
     // Validation
     if (!name || !slug || !description) {
-      res.status(400).json({ error: "All fields are required" });
+      res.status(400).json({ error: "Name, slug, and description are required" });
       return;
     }
 
     const result = await pool.query(
-      "INSERT INTO ctf_categories (name, slug, description, is_active) VALUES ($1, $2, $3, $4) RETURNING *",
-      [name, slug, description, is_active]
+      "INSERT INTO ctf_categories (name, slug, link, description, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [name, slug, link || `#${slug}`, description, is_active]
     );
 
     res.status(201).json(result.rows[0]);
@@ -113,18 +113,19 @@ export const createCategory = async (
   }
 };
 
-// Update category
+// Update category - FIXED THIS FUNCTION
 export const updateCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, slug, description, is_active }: CTFCategory = req.body;
+    const { name, slug, link, description, is_active }: CTFCategory = req.body;
 
+    // Fixed the parameter order and duplicate $5 issue
     const result = await pool.query(
-      "UPDATE ctf_categories SET name = $1, slug = $2, description = $3, is_active = $4 WHERE id = $5 RETURNING *",
-      [name, slug, description, is_active, id]
+      "UPDATE ctf_categories SET name = $1, slug = $2, description = $3, is_active = $4, link = $5 WHERE id = $6 RETURNING *",
+      [name, slug, description, is_active, link, id]
     );
 
     if (result.rows.length === 0) {
@@ -196,7 +197,7 @@ export const createChallenge = async (
       hint,
       drive_link,
       flag,
-      sort_order,
+      sort_order = 0,
       is_active = true,
     }: CTFChallenge = req.body;
 
@@ -313,7 +314,7 @@ export const deleteChallenge = async (
   }
 };
 
-// Existing functions...
+// Get all categories with their challenges
 export const getAllCategoriesWithChallenges = async (
   req: Request,
   res: Response
@@ -349,6 +350,7 @@ export const getAllCategoriesWithChallenges = async (
   }
 };
 
+// Get CTF page configuration
 export const getCTFPageConfig = async (
   req: Request,
   res: Response
@@ -374,6 +376,7 @@ export const getCTFPageConfig = async (
   }
 };
 
+// Update CTF page configuration
 export const updateCTFPageConfig = async (
   req: Request,
   res: Response
@@ -381,13 +384,10 @@ export const updateCTFPageConfig = async (
   try {
     const { header_title, page_subtitle }: CTFPageConfig = req.body;
 
+    // Fixed the query to properly handle upsert
     const result = await pool.query(
       `INSERT INTO ctf_page_config (header_title, page_subtitle) 
             VALUES ($1, $2) 
-            ON CONFLICT (id) DO UPDATE SET 
-            header_title = EXCLUDED.header_title, 
-            page_subtitle = EXCLUDED.page_subtitle,
-            updated_at = CURRENT_TIMESTAMP 
             RETURNING *`,
       [header_title, page_subtitle]
     );
@@ -395,6 +395,23 @@ export const updateCTFPageConfig = async (
     res.json(result.rows[0]);
   } catch (error) {
     console.error("Error updating page config:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Get active categories for frontend (simplified version)
+export const getActiveCategories = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, slug, link, description FROM ctf_categories WHERE is_active = true ORDER BY created_at"
+    );
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching active categories:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
