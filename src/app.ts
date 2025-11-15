@@ -26,12 +26,9 @@ import paket_1 from "./routes/paket1";
 import paket_2 from "./routes/paket2";
 import paket_3 from "./routes/paket3";
 import profileRoutes from "./routes/profileRoutes";
-import ctfRankingRoutes from "./routes/ctfRankingRoutes";
 import pageConfigRoutes from "./routes/pageConfigRoutes";
 import sertifikatRoutes from "./routes/sertifikatRoutes";
-import ctfPlaygroundRoutes from "./routes/ctfPlaygroundRoutes";
 import sertifPageManagements from "./routes/sertifPageManagementRoutes";
-import CTFPageManagements from "./routes/ctfPageRoutes";
 
 dotenv.config();
 
@@ -83,12 +80,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // ⚠️ FIX: Routes - Pastikan path base sudah benar
-app.use("/api/rankings", ctfRankingRoutes);
 app.use("/api/page-config", pageConfigRoutes);
 app.use("/api/sertifikat", sertifikatRoutes);
-app.use("/api/ctf", ctfPlaygroundRoutes);
 app.use("/api/page-management", sertifPageManagements);
-app.use("/api/ctf-page-management", CTFPageManagements); // ⚠️ Ini yang kita test
 
 // ⚠️ FIX: Tambahkan route test khusus untuk debugging
 app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
