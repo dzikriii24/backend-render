@@ -63,15 +63,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// ⚠️ FIX: Hapus duplikasi body parser, gunakan salah satu saja
+// Body parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ⚠️ FIX: Atau gunakan bodyParser (pilih salah satu, jangan keduanya)
-// app.use(bodyParser.json({ limit: '10mb' }));
-// app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-
-// ⚠️ FIX: Debug middleware untuk log semua request
+// Debug middleware untuk log semua request
 app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   console.log('Query params:', req.query);
@@ -79,12 +75,32 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// ⚠️ FIX: Routes - Pastikan path base sudah benar
+// ✅ ADD PING ROUTE HERE - SEBELUM ROUTES LAIN
+app.get("/ping", (req: Request, res: Response) => {
+  res.json({ 
+    message: 'Hallo, Percobaan Ping',
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Health check endpoint
+app.get("/api/health", (req: Request, res: Response) => {
+  res.json({
+    status: "OK",
+    message: "YMP Admin API is running",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Routes - Pastikan path base sudah benar
 app.use("/api/page-config", pageConfigRoutes);
 app.use("/api/sertifikat", sertifikatRoutes);
 app.use("/api/page-management", sertifPageManagements);
 
-// ⚠️ FIX: Tambahkan route test khusus untuk debugging
+// Tambahkan route test khusus untuk debugging
 app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
   console.log("Test route accessed");
   res.json({ 
@@ -143,30 +159,28 @@ app.use("*", (req: Request, res: Response) => {
     method: req.method,
     url: req.originalUrl,
     availableRoutes: [
+      "GET /ping",
+      "GET /api/health",
       "GET /api/ctf-page-management",
       "GET /api/ctf-page-management/test",
       "PUT /api/ctf-page-management/:id",
-      "GET /api/ctf-page-management/section/:section"
+      "GET /api/ctf-page-management/section/:section",
+      "GET /about-us"
     ]
   });
 });
 
-// Health check endpoint
-app.get("/api/health", (req: Request, res: Response) => {
-  res.json({
-    status: "OK",
-    message: "CTF Ranking API is running",
-    timestamp: new Date().toISOString(),
-  });
-});
+// ✅ FIX: Convert PORT to number
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
-  console.log(`CTF Page Management Test: http://localhost:${PORT}/api/ctf-page-management/test`);
-  console.log(`CTF Page Management Main: http://localhost:${PORT}/api/ctf-page-management`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📍 Ping: http://localhost:${PORT}/ping`);
+  console.log(`📍 CTF Page Management Test: http://localhost:${PORT}/api/ctf-page-management/test`);
+  console.log(`📍 CTF Page Management Main: http://localhost:${PORT}/api/ctf-page-management`);
+  console.log(`📍 About Us: http://localhost:${PORT}/about-us`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;
