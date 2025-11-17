@@ -1,6 +1,6 @@
 // src/models/adminModel.ts
 import client from "../config/database";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 interface AdminData {
   id: number;

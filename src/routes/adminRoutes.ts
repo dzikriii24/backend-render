@@ -1,7 +1,7 @@
 import express, { Router, Request, Response } from "express";
 import { findAllAdmins } from "../models/adminModel";  // Pastikan path-nya benar
 import pool from '../config/database';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const router: Router = express.Router();

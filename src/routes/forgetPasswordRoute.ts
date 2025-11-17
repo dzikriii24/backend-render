@@ -1,7 +1,7 @@
 import express from "express";
 import { Request, Response } from 'express-serve-static-core';
 import pool from "../config/database";
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 const router = express.Router();
