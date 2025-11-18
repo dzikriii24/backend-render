@@ -29,6 +29,10 @@ import profileRoutes from "./routes/profileRoutes";
 import pageConfigRoutes from "./routes/pageConfigRoutes";
 import sertifikatRoutes from "./routes/sertifikatRoutes";
 import sertifPageManagements from "./routes/sertifPageManagementRoutes";
+// Tambahkan import ini
+import ctfRankingRoutes from "./routes/ctfRankingRoutes";
+import ctfPlaygroundRoutes from "./routes/ctfPlaygroundRoutes";
+import CTFPageManagements from "./routes/ctfPageRoutes";
 
 dotenv.config();
 
@@ -100,6 +104,11 @@ app.use("/api/page-config", pageConfigRoutes);
 app.use("/api/sertifikat", sertifikatRoutes);
 app.use("/api/page-management", sertifPageManagements);
 
+
+app.use("/api/rankings", ctfRankingRoutes);
+app.use("/api/ctf", ctfPlaygroundRoutes);
+app.use("/api/ctf-page-management", CTFPageManagements);
+
 // Tambahkan route test khusus untuk debugging
 app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
   console.log("Test route accessed");
@@ -152,6 +161,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // 404 Handler untuk route yang tidak ditemukan
+// 404 Handler untuk route yang tidak ditemukan
 app.use("*", (req: Request, res: Response) => {
   console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({
@@ -162,9 +172,11 @@ app.use("*", (req: Request, res: Response) => {
       "GET /ping",
       "GET /api/health",
       "GET /api/ctf-page-management",
-      "GET /api/ctf-page-management/test",
+      "GET /api/ctf-page-management/test", 
       "PUT /api/ctf-page-management/:id",
       "GET /api/ctf-page-management/section/:section",
+      "GET /api/rankings",
+      "GET /api/ctf",
       "GET /about-us"
     ]
   });
@@ -179,6 +191,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📍 Ping: http://localhost:${PORT}/ping`);
   console.log(`📍 CTF Page Management Test: http://localhost:${PORT}/api/ctf-page-management/test`);
   console.log(`📍 CTF Page Management Main: http://localhost:${PORT}/api/ctf-page-management`);
+  console.log(`📍 CTF Rankings: http://localhost:${PORT}/api/rankings`);
+  console.log(`📍 CTF Playground: http://localhost:${PORT}/api/ctf`);
   console.log(`📍 About Us: http://localhost:${PORT}/about-us`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
