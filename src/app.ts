@@ -47,6 +47,10 @@ app.use(
       "https://www.google.com",
       "http://192.168.100.36:3000",
       "https://ccc9-114-10-45-131.ngrok-free.app",
+      "https://www.menu1s.my.id",
+      "https://menu1s.my.id",
+      "https://yuk-mari.com",
+      "https://www.yuk-mari.com"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -81,7 +85,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ✅ ADD PING ROUTE HERE - SEBELUM ROUTES LAIN
 app.get("/ping", (req: Request, res: Response) => {
-  res.json({ 
+  res.json({
     message: 'Hallo, Percobaan Ping',
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -112,7 +116,7 @@ app.use("/api/ctf-page-management", CTFPageManagements);
 // Tambahkan route test khusus untuk debugging
 app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
   console.log("Test route accessed");
-  res.json({ 
+  res.json({
     message: "CTF Page Management API is working!",
     timestamp: new Date().toISOString()
   });
@@ -172,7 +176,7 @@ app.use("*", (req: Request, res: Response) => {
       "GET /ping",
       "GET /api/health",
       "GET /api/ctf-page-management",
-      "GET /api/ctf-page-management/test", 
+      "GET /api/ctf-page-management/test",
       "PUT /api/ctf-page-management/:id",
       "GET /api/ctf-page-management/section/:section",
       "GET /api/rankings",
