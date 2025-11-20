@@ -2,19 +2,20 @@ import express from "express";
 import pool from "../config/database";
 import { Request, Response } from "express";
 
-const CTFAccessCode = express.Router();
+const router = express.Router(); // ✅ GUNAKAN router BUKAN express.Router()
 
 // Route untuk check access code
-CTFAccessCode.post('/check-access', async (req: Request, res: Response) => {
+router.post('/check-access', async (req: Request, res: Response) => {
   try {
     const { accessCode, challengeId } = req.body;
     
+    console.log("Check access request:", { accessCode, challengeId }); // ✅ DEBUG LOG
+
     if (!accessCode || !challengeId) {
-      res.status(400).json({
+      return res.status(400).json({
         status: 'error',
         message: 'Access code dan challenge ID required'
       });
-      return;
     }
 
     // Query ke database
@@ -25,6 +26,8 @@ CTFAccessCode.post('/check-access', async (req: Request, res: Response) => {
        WHERE c.access_code = $1 OR c.id = $2`,
       [accessCode, challengeId]
     );
+
+    console.log("Database result:", result.rows); // ✅ DEBUG LOG
 
     if (result.rows.length > 0) {
       const challenge = result.rows[0];
@@ -49,9 +52,10 @@ CTFAccessCode.post('/check-access', async (req: Request, res: Response) => {
     console.error('Check access error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Database query failed'
+      message: 'Database query failed',
+      error: error.message
     });
   }
 });
 
-export default CTFAccessCode;
+export default router; // ✅ EXPORT router
