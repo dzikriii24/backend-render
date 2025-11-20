@@ -33,6 +33,7 @@ import sertifPageManagements from "./routes/sertifPageManagementRoutes";
 import ctfRankingRoutes from "./routes/ctfRankingRoutes";
 import ctfPlaygroundRoutes from "./routes/ctfPlaygroundRoutes";
 import CTFPageManagements from "./routes/ctfPageRoutes";
+import CTFAccessCode from "./routes/ctfAccessCode"
 
 dotenv.config();
 
@@ -112,6 +113,7 @@ app.use("/api/page-management", sertifPageManagements);
 app.use("/api/rankings", ctfRankingRoutes);
 app.use("/api/ctf", ctfPlaygroundRoutes);
 app.use("/api/ctf-page-management", CTFPageManagements);
+app.use("/api/ctf-access", CTFAccessCode);
 
 // Tambahkan route test khusus untuk debugging
 app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
@@ -181,6 +183,7 @@ app.use("*", (req: Request, res: Response) => {
       "GET /api/ctf-page-management/section/:section",
       "GET /api/rankings",
       "GET /api/ctf",
+      "POST /api/ctf-access/check-access",
       "GET /about-us"
     ]
   });
@@ -197,6 +200,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📍 CTF Page Management Main: http://localhost:${PORT}/api/ctf-page-management`);
   console.log(`📍 CTF Rankings: http://localhost:${PORT}/api/rankings`);
   console.log(`📍 CTF Playground: http://localhost:${PORT}/api/ctf`);
+  console.log(`📍 CTF Access Check: http://localhost:${PORT}/api/ctf-access/check-access`);
   console.log(`📍 About Us: http://localhost:${PORT}/about-us`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
