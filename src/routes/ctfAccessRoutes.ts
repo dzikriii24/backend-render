@@ -4,7 +4,7 @@ import pool from "../config/database";
 const ctfAccessRoutes: Router = express.Router();
 
 // ======================
-// CHECK ACCESS CODE
+// CHECK ACCESS CODE - FIXED VERSION
 // ======================
 ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -18,20 +18,20 @@ ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promi
       return;
     }
 
-    console.log(`Checking access: ${accessCode} for challenge ${challengeId}`);
+    console.log(`🔐 Checking access: "${accessCode}" for challenge ${challengeId}`);
 
-    // Cek di database berdasarkan access_code atau ID challenge
+    // FIX: Cek HARUS access_code DAN challenge_id cocok
     const dbResult = await pool.query(
       `SELECT c.*, cat.category_key 
        FROM ctf_challenges c 
        JOIN ctf_categories cat ON c.category_id = cat.id 
-       WHERE c.access_code = $1 OR c.id = $2`,
+       WHERE c.access_code = $1 AND c.id = $2`,
       [accessCode, challengeId]
     );
 
     if (dbResult.rows.length > 0) {
       const challenge = dbResult.rows[0];
-      console.log(`Access granted for challenge: ${challenge.title}`);
+      console.log(`✅ Access granted for challenge: ${challenge.title}`);
       
       res.json({
         status: "success",
@@ -47,6 +47,8 @@ ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promi
     }
 
     // Fallback: Cek format legacy dari akses_list_ctf.txt
+    console.log("🔄 Trying legacy format check...");
+    
     // Format: email_code_challengeId (kumaha@satu.com_ggg_CR-1)
     // Format: code_challengeId (qwerty_4)
     const legacyResult = await pool.query(
@@ -59,11 +61,38 @@ ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promi
       
       // Cek format CR-{id} seperti CR-1, CR-2, dll
       const expectedFormat1 = `CR-${challengeId}`;
-      // Cek format tanpa prefix (hanya angka)
-      const expectedFormat2 = challengeId;
       
-      if (accessCode === expectedFormat1 || accessCode === expectedFormat2) {
-        console.log(`Legacy access granted for challenge: ${challenge.title}`);
+      if (accessCode === expectedFormat1) {
+        console.log(`✅ Legacy access granted for challenge: ${challenge.title}`);
+        
+        res.json({
+          status: "success",
+          valid: true,
+          challenge: {
+            id: challenge.id,
+            title: challenge.title,
+            drive_link: challenge.drive_link,
+            access_code: challenge.access_code,
+          },
+        });
+        return;
+      }
+
+      // Cek format dari akses_list_ctf.txt
+      const fileFormats = [
+        { code: "ggg", challenge: "5" },
+        { code: "def456", challenge: "6" },
+        { code: "xyz789", challenge: "7" },
+        { code: "qwerty", challenge: "8" },
+        { code: "letmein", challenge: "9" }
+      ];
+
+      const validFileFormat = fileFormats.find(
+        item => item.code === accessCode && item.challenge === challengeId
+      );
+
+      if (validFileFormat) {
+        console.log(`✅ File format access granted for challenge: ${challenge.title}`);
         
         res.json({
           status: "success",
@@ -79,7 +108,7 @@ ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promi
       }
     }
 
-    console.log(`Access denied for code: ${accessCode}, challenge: ${challengeId}`);
+    console.log(`❌ Access denied for code: "${accessCode}", challenge: ${challengeId}`);
     res.json({
       status: "success",
       valid: false,
@@ -87,7 +116,7 @@ ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promi
     });
 
   } catch (err) {
-    console.error("Error in check-access:", err);
+    console.error("💥 Error in check-access:", err);
     res.status(500).json({
       status: "error",
       message: "Database query failed",
@@ -159,50 +188,6 @@ ctfAccessRoutes.put("/access-code/:id", async (req: Request, res: Response): Pro
     });
   } catch (err) {
     console.error("Error in update access-code:", err);
-    res.status(500).json({
-      status: "error",
-      message: "Database query failed",
-    });
-  }
-});
-
-// ======================
-// BULK UPDATE ACCESS CODES (Optional)
-// ======================
-ctfAccessRoutes.post("/bulk-access-codes", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { accessCodes } = req.body; // Array of {id, access_code}
-
-    if (!Array.isArray(accessCodes)) {
-      res.status(400).json({
-        status: "error",
-        message: "Array accessCodes diperlukan",
-      });
-      return;
-    }
-
-    const results = [];
-    for (const item of accessCodes) {
-      const result = await pool.query(
-        `UPDATE ctf_challenges 
-         SET access_code = $1, updated_at = CURRENT_TIMESTAMP 
-         WHERE id = $2 
-         RETURNING id, title, access_code`,
-        [item.access_code, item.id]
-      );
-      
-      if (result.rows.length > 0) {
-        results.push(result.rows[0]);
-      }
-    }
-
-    res.json({
-      status: "success",
-      data: results,
-      message: `Berhasil update ${results.length} access codes`,
-    });
-  } catch (err) {
-    console.error("Error in bulk access-codes:", err);
     res.status(500).json({
       status: "error",
       message: "Database query failed",
