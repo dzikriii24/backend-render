@@ -113,7 +113,7 @@ app.use("/api/page-management", sertifPageManagements);
 app.use("/api/rankings", ctfRankingRoutes);
 app.use("/api/ctf", ctfPlaygroundRoutes);
 app.use("/api/ctf-page-management", CTFPageManagements);
-app.use("/api/ctf-access", ctfAccessRoutes);
+app.use("/api/ctf", ctfAccessRoutes);
 
 // Tambahkan route test khusus untuk debugging
 app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
