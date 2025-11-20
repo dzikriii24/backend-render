@@ -49,6 +49,11 @@ app.use(
       "https://www.google.com", 
       "http://192.168.100.36:3000",
       "https://ccc9-114-10-45-131.ngrok-free.app",
+      "https://yuk-mari.com",
+      "http://localhost",
+      "https://www.menu1s.my.id",
+      "http://localhost:80",
+      "https://yuk-mari.com:443"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
