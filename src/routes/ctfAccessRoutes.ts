@@ -1,23 +1,26 @@
-import express from "express";
+import express, { Request, Response, Router } from "express";
 import pool from "../config/database";
 
-const ctfAccessRoutes = express.Router();
+const ctfAccessRoutes: Router = express.Router();
 
-// Check access code untuk CTF
-ctfAccessRoutes.post("/check-access", async (req, res) => {
+// ======================
+// CHECK ACCESS CODE
+// ======================
+ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promise<void> => {
   try {
     const { accessCode, challengeId } = req.body;
 
     if (!accessCode || !challengeId) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Access code dan challenge ID diperlukan'
+      res.status(400).json({
+        status: "error",
+        message: "Access code dan challenge ID diperlukan",
       });
+      return;
     }
 
-    console.log(`Checking access: code=${accessCode}, challenge=${challengeId}`);
+    console.log(`Checking access: ${accessCode} for challenge ${challengeId}`);
 
-    // Query 1: Cek berdasarkan access_code di database
+    // Cek di database berdasarkan access_code atau ID challenge
     const dbResult = await pool.query(
       `SELECT c.*, cat.category_key 
        FROM ctf_challenges c 
@@ -30,123 +33,179 @@ ctfAccessRoutes.post("/check-access", async (req, res) => {
       const challenge = dbResult.rows[0];
       console.log(`Access granted for challenge: ${challenge.title}`);
       
-      return res.json({
-        status: 'success',
+      res.json({
+        status: "success",
         valid: true,
         challenge: {
           id: challenge.id,
           title: challenge.title,
           drive_link: challenge.drive_link,
-          access_code: challenge.access_code
-        }
+          access_code: challenge.access_code,
+        },
       });
+      return;
     }
 
-    // Query 2: Fallback - cek berdasarkan format access code legacy
+    // Fallback: Cek format legacy dari akses_list_ctf.txt
+    // Format: email_code_challengeId (kumaha@satu.com_ggg_CR-1)
+    // Format: code_challengeId (qwerty_4)
     const legacyResult = await pool.query(
-      `SELECT c.*, cat.category_key 
-       FROM ctf_challenges c 
-       JOIN ctf_categories cat ON c.category_id = cat.id 
-       WHERE c.id = $1`,
+      `SELECT * FROM ctf_challenges WHERE id = $1`,
       [challengeId]
     );
 
     if (legacyResult.rows.length > 0) {
       const challenge = legacyResult.rows[0];
-      const expectedAccessCode = `CR-${challengeId}`;
       
-      // Simulasi check format file akses_list_ctf.txt
-      if (accessCode === expectedAccessCode) {
+      // Cek format CR-{id} seperti CR-1, CR-2, dll
+      const expectedFormat1 = `CR-${challengeId}`;
+      // Cek format tanpa prefix (hanya angka)
+      const expectedFormat2 = challengeId;
+      
+      if (accessCode === expectedFormat1 || accessCode === expectedFormat2) {
         console.log(`Legacy access granted for challenge: ${challenge.title}`);
         
-        return res.json({
-          status: 'success',
+        res.json({
+          status: "success",
           valid: true,
           challenge: {
             id: challenge.id,
             title: challenge.title,
             drive_link: challenge.drive_link,
-            access_code: challenge.access_code
-          }
+            access_code: challenge.access_code,
+          },
         });
+        return;
       }
     }
 
     console.log(`Access denied for code: ${accessCode}, challenge: ${challengeId}`);
-    return res.json({
-      status: 'success',
+    res.json({
+      status: "success",
       valid: false,
-      message: 'Kode akses tidak valid untuk challenge ini'
+      message: "Kode akses tidak valid untuk challenge ini",
     });
 
-  } catch (error) {
-    console.error('Error checking access code:', error);
-    return res.status(500).json({
-      status: 'error',
-      message: 'Database query failed'
+  } catch (err) {
+    console.error("Error in check-access:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Database query failed",
     });
   }
 });
 
-// Get all access codes (untuk admin)
-ctfAccessRoutes.get("/access-codes", async (req, res) => {
+// ======================
+// GET ACCESS CODES
+// ======================
+ctfAccessRoutes.get("/access-codes", async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
       `SELECT c.id, c.title, c.access_code, c.drive_link, cat.name as category_name
-       FROM ctf_challenges c 
-       JOIN ctf_categories cat ON c.category_id = cat.id 
+       FROM ctf_challenges c
+       JOIN ctf_categories cat ON c.category_id = cat.id
        WHERE c.is_active = true
        ORDER BY c.id`
     );
 
     res.json({
-      status: 'success',
-      data: result.rows
+      status: "success",
+      data: result.rows,
     });
-  } catch (error) {
-    console.error('Error fetching access codes:', error);
+  } catch (err) {
+    console.error("Error in access-codes:", err);
     res.status(500).json({
-      status: 'error',
-      message: 'Database query failed'
+      status: "error",
+      message: "Database query failed",
     });
   }
 });
 
-// Update access code (untuk admin)
-ctfAccessRoutes.put("/access-code/:id", async (req, res) => {
+// ======================
+// UPDATE ACCESS CODE
+// ======================
+ctfAccessRoutes.put("/access-code/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { access_code } = req.body;
 
     if (!access_code) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Access code diperlukan'
+      res.status(400).json({
+        status: "error",
+        message: "Access code diperlukan",
       });
+      return;
     }
 
     const result = await pool.query(
-      `UPDATE ctf_challenges SET access_code = $1, updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $2 RETURNING *`,
+      `UPDATE ctf_challenges 
+       SET access_code = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 
+       RETURNING *`,
       [access_code, id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'Challenge tidak ditemukan'
+      res.status(404).json({
+        status: "error",
+        message: "Challenge tidak ditemukan",
       });
+      return;
     }
 
     res.json({
-      status: 'success',
-      data: result.rows[0]
+      status: "success",
+      data: result.rows[0],
     });
-  } catch (error) {
-    console.error('Error updating access code:', error);
+  } catch (err) {
+    console.error("Error in update access-code:", err);
     res.status(500).json({
-      status: 'error',
-      message: 'Database query failed'
+      status: "error",
+      message: "Database query failed",
+    });
+  }
+});
+
+// ======================
+// BULK UPDATE ACCESS CODES (Optional)
+// ======================
+ctfAccessRoutes.post("/bulk-access-codes", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { accessCodes } = req.body; // Array of {id, access_code}
+
+    if (!Array.isArray(accessCodes)) {
+      res.status(400).json({
+        status: "error",
+        message: "Array accessCodes diperlukan",
+      });
+      return;
+    }
+
+    const results = [];
+    for (const item of accessCodes) {
+      const result = await pool.query(
+        `UPDATE ctf_challenges 
+         SET access_code = $1, updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $2 
+         RETURNING id, title, access_code`,
+        [item.access_code, item.id]
+      );
+      
+      if (result.rows.length > 0) {
+        results.push(result.rows[0]);
+      }
+    }
+
+    res.json({
+      status: "success",
+      data: results,
+      message: `Berhasil update ${results.length} access codes`,
+    });
+  } catch (err) {
+    console.error("Error in bulk access-codes:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Database query failed",
     });
   }
 });

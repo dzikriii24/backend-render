@@ -29,11 +29,12 @@ import profileRoutes from "./routes/profileRoutes";
 import pageConfigRoutes from "./routes/pageConfigRoutes";
 import sertifikatRoutes from "./routes/sertifikatRoutes";
 import sertifPageManagements from "./routes/sertifPageManagementRoutes";
-// Tambahkan import ini
+
+// ✅ TAMBAHKAN IMPORT INI
 import ctfRankingRoutes from "./routes/ctfRankingRoutes";
 import ctfPlaygroundRoutes from "./routes/ctfPlaygroundRoutes";
 import CTFPageManagements from "./routes/ctfPageRoutes";
-import ctfAccessRoutes from "./routes/ctfAccessRoutes";
+import ctfAccessRoutes from "./routes/ctfAccessRoutes"; // ⬅️ IMPORT BARU
 
 dotenv.config();
 
@@ -45,19 +46,15 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://www.google.com",
+      "https://www.google.com", 
       "http://192.168.100.36:3000",
       "https://ccc9-114-10-45-131.ngrok-free.app",
-      "https://www.menu1s.my.id",
-      "https://menu1s.my.id",
-      "https://yuk-mari.com",
-      "https://www.yuk-mari.com"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
-      "Authorization",
+      "Authorization", 
       "x-timezone",
       "Accept",
       "Cross-Origin-Resource-Policy",
@@ -86,7 +83,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ✅ ADD PING ROUTE HERE - SEBELUM ROUTES LAIN
 app.get("/ping", (req: Request, res: Response) => {
-  res.json({
+  res.json({ 
     message: 'Hallo, Percobaan Ping',
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -109,16 +106,16 @@ app.use("/api/page-config", pageConfigRoutes);
 app.use("/api/sertifikat", sertifikatRoutes);
 app.use("/api/page-management", sertifPageManagements);
 
-
+// ✅ TAMBAHKAN ROUTES BARU INI
 app.use("/api/rankings", ctfRankingRoutes);
 app.use("/api/ctf", ctfPlaygroundRoutes);
 app.use("/api/ctf-page-management", CTFPageManagements);
-app.use("/api/ctf", ctfAccessRoutes);
+app.use("/api/ctf-access", ctfAccessRoutes); // ⬅️ ROUTE BARU
 
 // Tambahkan route test khusus untuk debugging
 app.get("/api/ctf-page-management/test", (req: Request, res: Response) => {
   console.log("Test route accessed");
-  res.json({
+  res.json({ 
     message: "CTF Page Management API is working!",
     timestamp: new Date().toISOString()
   });
@@ -167,7 +164,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // 404 Handler untuk route yang tidak ditemukan
-// 404 Handler untuk route yang tidak ditemukan
 app.use("*", (req: Request, res: Response) => {
   console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({
@@ -181,6 +177,9 @@ app.use("*", (req: Request, res: Response) => {
       "GET /api/ctf-page-management/test",
       "PUT /api/ctf-page-management/:id",
       "GET /api/ctf-page-management/section/:section",
+      "POST /api/ctf-access/check-access",
+      "GET /api/ctf-access/access-codes",
+      "PUT /api/ctf-access/access-code/:id",
       "GET /api/rankings",
       "GET /api/ctf",
       "GET /about-us"
@@ -197,6 +196,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📍 Ping: http://localhost:${PORT}/ping`);
   console.log(`📍 CTF Page Management Test: http://localhost:${PORT}/api/ctf-page-management/test`);
   console.log(`📍 CTF Page Management Main: http://localhost:${PORT}/api/ctf-page-management`);
+  console.log(`📍 CTF Access Check: http://localhost:${PORT}/api/ctf-access/check-access`);
   console.log(`📍 CTF Rankings: http://localhost:${PORT}/api/rankings`);
   console.log(`📍 CTF Playground: http://localhost:${PORT}/api/ctf`);
   console.log(`📍 About Us: http://localhost:${PORT}/about-us`);
