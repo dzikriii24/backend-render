@@ -80,9 +80,9 @@ ctfAccessRoutes.post("/check-access", async (req: Request, res: Response): Promi
 
       // Cek format dari akses_list_ctf.txt
       const fileFormats = [
-        { code: "ggg", challenge: "5" },
-        { code: "def456", challenge: "6" },
-        { code: "xyz789", challenge: "7" },
+        { code: "kumaha@satu.com_ggg", challenge: "5" },
+        { code: "adam@gmail.com_def456", challenge: "6" },
+        { code: "yabegitulah@gmail.com_xyz789", challenge: "7" },
         { code: "qwerty", challenge: "8" },
         { code: "letmein", challenge: "9" }
       ];
